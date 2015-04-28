@@ -1,6 +1,8 @@
 {
     "name": "aerynl/refinement",
+    "version": "1.0.0",
     "description": "Easy refinements for use with Laravel 4",
+    "homepage": "http://github.com/aerynl/refinement",
     "license": "MIT",
     "authors": [
         {
@@ -20,6 +22,5 @@
         "psr-0": {
             "Aerynl\\Refinement\\": "src/"
         }
-    },
-    "minimum-stability": "stable"
+    }
 }
