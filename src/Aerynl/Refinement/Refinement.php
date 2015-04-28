@@ -1,8 +1,6 @@
 <?php namespace Aerynl\Refinement;
 
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Pluralizer;
-use Illuminate\Support\Facades\DB;
 use Config;
 
 class Refinement
@@ -25,7 +23,7 @@ class Refinement
      */
     public static function updateRefinements($refinements_name, $new_refinements)
     {
-        Session::put($refinements_name, $new_refinements);
+        \Session::put($refinements_name, $new_refinements);
     }
 
     /**
@@ -71,7 +69,7 @@ class Refinement
             }
         }
 
-        $refinements = empty($refinements_array) ? Session::get($session_name) : $refinements_array;
+        $refinements = empty($refinements_array) ? \Session::get($session_name) : $refinements_array;
         if (empty($refinements)) return $query;
 
         $current_table = strtolower(Pluralizer::plural($current_model));
@@ -164,7 +162,7 @@ class Refinement
 
         $options_array = array();
         $current_table = strtolower(Pluralizer::plural($current_model));
-        $full_refinements_array = Session::has($session_name) ? Session::get($session_name) : array();
+        $full_refinements_array = \Session::has($session_name) ? \Session::get($session_name) : array();
         $current_model_id = \App::make($current_model)->getKeyName();
         $config_joins = Config::get('refinement::joins');
         $titles = Config::get('refinement::titles');
@@ -186,7 +184,7 @@ class Refinement
             $option_data = array(
                 'parent_table' => $option_scheme['parent_table'],
                 'column_name' => $option_scheme['filter_column'],
-                'title' => !empty($titles[$titles_key]) ? $titles[$titles_key] : "",
+                'title' => !empty($titles[$titles_key]) ? $titles[$titles_key] : ucfirst($option_scheme['filter_value']),
                 'options' => array()
             );
 
@@ -251,7 +249,7 @@ class Refinement
 
             /* TODO: a soon as this issue is fixed, rewrite to have options counted by sql https://github.com/sleeping-owl/with-join/issues/10 */
             $option_query = $option_query->select(
-                DB::raw("COUNT(1) as option_count, {$option_name} as option_name, {$option_id} as option_id")
+                \DB::raw("COUNT(1) as option_count, {$option_name} as option_name, {$option_id} as option_id")
             )->groupBy($option_id, $current_table.".".$current_model_id);
 
             /* finally getting records */
@@ -288,7 +286,7 @@ class Refinement
             $sql = preg_replace('/\?/', $value, $sql, 1);
         }
 
-        $results = DB::select($sql);
+        $results = \DB::select($sql);
 
         return $results;
     }
