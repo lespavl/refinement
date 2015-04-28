@@ -1,0 +1,25 @@
+{
+    "name": "aerynl/refinement",
+    "description": "Easy refinements for use with Laravel 4",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kay Lucas",
+            "email": "kay@aery.nl"
+        },
+        {
+          "name": "Olesya Pavlova",
+          "email": "lespavl@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "illuminate/support": "4.1.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "Aerynl\\Refinement\\": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}
