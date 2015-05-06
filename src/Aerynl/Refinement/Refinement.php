@@ -125,7 +125,8 @@ class Refinement
      * e.g.
      * $maintenance_options = array(
      * array( 'parent_table' => 'elements', 'join_table' => 'locations', 'filter_column' => 'location_id', 'filter_value' => 'location' ),
-     * array( 'parent_table' => 'elements', 'join_table' => 'element_type', 'filter_column' => 'element_type_id', 'filter_value' => 'element_type' ),
+     * array( 'parent_table' => 'elements', 'join_table' => 'element_type', 'filter_column' => 'element_type_id',
+     *      'filter_value' => 'element_type', 'additional_wheres' => array("elements.approval_pending is not NULL") ),
      * );
      * This means, that results are filtered by `elements.location_id`. And location names you can see in `locations.location` column.
      *
@@ -200,8 +201,17 @@ class Refinement
                 unset($option_refinements_array[$option_scheme['parent_table']]);
             }
 
+            /* add additional wheres */
+            $option_additional_wheres = $additional_wheres;
+            if(!empty($option_scheme['additional_wheres'])) {
+                foreach($option_scheme['additional_wheres'] as $option_where) {
+                    if(in_array($option_where, $option_additional_wheres)) continue;
+                    $option_additional_wheres[] = $option_where;
+                }
+            }
+
             /* generate query with updated refinements */
-            $option_query = self::getRefinedQuery($current_model, "", $eager, $additional_wheres, $additional_joins, $option_refinements_array);
+            $option_query = self::getRefinedQuery($current_model, "", $eager, $option_additional_wheres, $additional_joins, $option_refinements_array);
 
             /* add option parent table if we haven't joined before */
             $option_parent_model = ucfirst(Pluralizer::singular($option_scheme['parent_table']));
