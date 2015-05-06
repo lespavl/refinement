@@ -250,7 +250,7 @@ class Refinement
             /* TODO: a soon as this issue is fixed, rewrite to have options counted by sql https://github.com/sleeping-owl/with-join/issues/10 */
             $option_query = $option_query->select(
                 \DB::raw("COUNT(1) as option_count, {$option_name} as option_name, {$option_id} as option_id")
-            )->groupBy($option_id, $current_table.".".$current_model_id);
+            )->groupBy($option_id, $current_table.".".$current_model_id)->orderBy($option_name);
 
             /* finally getting records */
             $options_records = self::getArrayFromQuery($option_query);
