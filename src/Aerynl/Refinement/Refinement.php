@@ -19,6 +19,7 @@ class Refinement
     }
 
     /**
+     * Is used to generate query for getting filtered results.
      * @param string $current_model - main model name. Its elements are being filtered.
      * @param string $session_name - name of the session array, where refinements are kept
      * @param array $eager - eager loading of models
@@ -30,6 +31,8 @@ class Refinement
     public static function getRefinedQuery($current_model, $session_name = "", $eager = array(), $additional_wheres = array(), $additional_joins = array(), $refinements_array = array())
     {
         if (empty($current_model)) return false;
+
+        $current_table = strtolower(Pluralizer::plural($current_model));
 
         if (!is_array($eager)) $eager = array($eager);
         $query = $current_model::with($eager);
@@ -43,42 +46,20 @@ class Refinement
         $already_joined = array();
         if (!empty($additional_joins)) {
             foreach ($additional_joins as $additional_join) {
-                if (empty($additional_join) || empty($additional_join['table_name'])
-                    || empty($additional_join['right_join']) || empty($additional_join['operand'])
-                    || empty($additional_join['left_join'])) continue;
-                $query->join($additional_join['table_name'], $additional_join['right_join'], $additional_join['operand'], $additional_join['left_join']);
-                $already_joined[] = $additional_join['table_name'];
+                $query = self::joinTableToQuery($query, $additional_join, $current_table);
+                $already_joined[] = $additional_join;
             }
         }
 
         $refinements = empty($refinements_array) ? \Session::get($session_name) : $refinements_array;
         if (empty($refinements)) return $query;
 
-        $current_table = strtolower(Pluralizer::plural($current_model));
-        $config_joins = Config::get('refinement::joins');
-
         foreach ($refinements as $refinement_table => $refinement) {
             $refinement_model = ucfirst(Pluralizer::singular($refinement_table));
 
             if ($current_model != $refinement_model && !in_array($refinement_table, $already_joined)) {
                 /* in this case we need to join the table to be able to filter by it */
-
-                /* first we need to find join statement in configuration array */
-                $join_statement = array();
-                $join_statement_keys = array(
-                    "{$current_table}|{$refinement_table}",
-                    "{$refinement_table}|{$current_table}"
-                );
-
-                foreach ($join_statement_keys as $join_statement_key) {
-                    if (empty($config_joins[$join_statement_key])) continue;
-                    $join_statement = $config_joins[$join_statement_key];
-                }
-
-                /* if there is no record in config array for this table, skip filtering by it */
-                if (empty($join_statement)) continue;
-
-                $query = $query->join($refinement_table, $join_statement['left'], $join_statement['operand'], $join_statement['right']);
+                $query = self::joinTableToQuery($query, $refinement_table, $current_table);
                 $already_joined[] = $refinement_table;
             }
 
@@ -109,23 +90,15 @@ class Refinement
         $current_table = strtolower(Pluralizer::plural($current_model));
         $full_refinements_array = \Session::has($session_name) ? \Session::get($session_name) : array();
         $current_model_id = \App::make($current_model)->getKeyName();
-        $config_joins = Config::get('refinement::joins');
         $titles = Config::get('refinement::titles');
 
         /* remember tables, which will be added by refinements function */
         $already_joined = array();
-        if (!empty($additional_joins)) {
-            foreach ($additional_joins as $additional_join) {
-                if (empty($additional_join) || empty($additional_join['table_name'])
-                    || empty($additional_join['right_join']) || empty($additional_join['operand'])
-                    || empty($additional_join['left_join'])) continue;
-                $already_joined[] = $additional_join['table_name'];
-            }
-        }
+        if (!empty($additional_joins)) $already_joined = $additional_joins;
 
         foreach ($options_scheme as $option_key => $option_scheme) {
             try {
-                $titles_key = $option_scheme['parent_table'] . "|" . $option_scheme['filter_value'];
+                $titles_key = $option_scheme['parent_table'] . "|" . $option_scheme['filter_column'];
 
                 $option_data = array(
                     'parent_table' => $option_scheme['parent_table'],
@@ -162,22 +135,9 @@ class Refinement
                 $option_parent_model = ucfirst(Pluralizer::singular($option_scheme['parent_table']));
                 if ($current_model != $option_parent_model && empty($option_refinements_array[$option_scheme['parent_table']])
                     && !in_array($option_scheme['parent_table'], $already_joined)) {
-                    /* first we need to find join statement in configuration array */
-                    $join_statement = array();
-                    $join_statement_keys = array(
-                        "{$current_table}|{$option_scheme['parent_table']}",
-                        "{$option_scheme['parent_table']}|{$current_table}"
-                    );
 
-                    foreach ($join_statement_keys as $join_statement_key) {
-                        if (empty($config_joins[$join_statement_key])) continue;
-                        $join_statement = $config_joins[$join_statement_key];
-                    }
-
-                    /* if there is no record in config array for this table, skip filtering by it */
-                    if (empty($join_statement)) continue;
-
-                    $option_query = $option_query->join($option_scheme['parent_table'], $join_statement['left'], $join_statement['operand'], $join_statement['right']);
+                    $option_query = self::joinTableToQuery($option_query, $option_scheme['parent_table'], $current_table);
+                    $already_joined[] = $option_scheme['parent_table'];
                 }
 
                 /* add option child table if needed */
@@ -249,5 +209,33 @@ class Refinement
         $results = \DB::select($sql);
 
         return $results;
+    }
+
+    /**
+     * Is used to join tables to main query using config file
+     * @param \Illuminate\Database\Query\Builder $query - Query Builder object - main query
+     * @param $join_table_name - table we need to join
+     * @param $current_table - table we join to
+     * @return Illuminate\Database\Query\Builder $query - Query Builder object
+     */
+    private static function joinTableToQuery($query, $join_table_name, $current_table) {
+        $config_joins = Config::get('refinement::joins');
+
+        /* first we need to find join statement in configuration array */
+        $join_statement = array();
+        $join_statement_keys = array(
+            "{$current_table}|{$join_table_name}",
+            "{$join_table_name}|{$current_table}"
+        );
+
+        foreach ($join_statement_keys as $join_statement_key) {
+            if (empty($config_joins[$join_statement_key])) continue;
+            $join_statement = $config_joins[$join_statement_key];
+        }
+
+        /* if there is no record in config array for this table, skip it */
+        if (empty($join_statement)) return $query;
+
+        return $query->join($join_table_name, $join_statement['left'], $join_statement['operand'], $join_statement['right']);
     }
 }
