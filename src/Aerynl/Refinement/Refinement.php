@@ -180,7 +180,7 @@ class Refinement
                             'checked' => in_array($option_record->option_id, $selected_options_array)
                         );
                     }
-                    $option_data['options'][$option_record->option_id]['count'] += $option_record->option_count;
+                    $option_data['options'][$option_record->option_id]['count'] += (!empty($option_scheme['distinct']) ? 1 : $option_record->option_count);
                 }
 
                 $options_array[] = $option_data;
