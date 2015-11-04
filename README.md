@@ -68,9 +68,7 @@ Example:
 ```
 
 ## Refinement title translations
-```
-Create a file called refinement.php in '/app/lang/en', there you'll be able to add translations for the titles you've added to the configuration.
-```
+Create a file called refinement.php in `/app/lang/en`, there you'll be able to add translations for the titles you've added to the configuration.
 
 ## Detailed information about functions
 
