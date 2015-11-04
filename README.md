@@ -66,6 +66,12 @@ Example:
 	...
 );
 ```
+
+## Refinement title translations
+```
+Create a file called refinement.php in '/app/lang/en', there you'll be able to add translations for the titles you've added to the configuration.
+```
+
 ## Detailed information about functions
 
 #### `Refinement::updateRefinements($session_name, $new_refinements)`
@@ -141,8 +147,6 @@ $options_scheme = array(
 		'join_table' => string $join_table_name, - table, which is joined to parent table and contains option names
 		'filter_value' => string $join_table_column - column with option names
 		'additional_wheres' => array of strings - additional where statements
-		'order_by' => column by which options will be ordered. If not specified, they will be ordered by 'filter_value'
-		'distinct' => use it in case you have many-to-many relation and don't want to have wrong count of items with selected option
 	), 
 	...
 );
