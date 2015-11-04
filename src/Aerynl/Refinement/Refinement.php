@@ -103,7 +103,7 @@ class Refinement
                 $option_data = array(
                     'parent_table' => $option_scheme['parent_table'],
                     'column_name' => $option_scheme['filter_column'],
-                    'title' => !empty($titles[$titles_key]) ? $titles[$titles_key] : ucfirst($option_scheme['filter_value']),
+                    'title' => !empty($titles[$titles_key]) ? trans('refinements.'.$titles[$titles_key]) : ucfirst($option_scheme['filter_value']),
                     'options' => array()
                 );
 
